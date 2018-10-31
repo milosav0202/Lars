@@ -1,0 +1,7 @@
+LARS_NOTES
+
+* when done with buuteeq update, need to go back and
+... update prior to march
+... update others (geo, keyword)
+... update other accounts
+... setup weekly update cron

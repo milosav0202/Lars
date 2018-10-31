@@ -1,0 +1,184 @@
+<%def name="csrf()">
+% if csrf_token:
+<div style='display:none'><input type='hidden' name='csrfmiddlewaretoken' value='${csrf_token}' /></div>
+% endif
+</%def>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Lars Marketing Reports</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="/static/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+
+      @media (max-width: 980px) {
+        /* Enable use of floated navbar text */
+        .navbar-text.pull-right {
+          float: none;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+      }
+    </style>
+    <link href="/static/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/static/datepicker/css/datepicker.css" />
+    <!-- link rel="stylesheet" type="text/css" href="/static/bootstrap-daterangepicker/daterangepicker.css" / -->
+
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="/static/bootstrap/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/static/bootstrap/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/static/bootstrap/ico/apple-touch-icon-114-precomposed.png">
+      <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/static/bootstrap/ico/apple-touch-icon-72-precomposed.png">
+                    <link rel="apple-touch-icon-precomposed" href="/static/bootstrap/ico/apple-touch-icon-57-precomposed.png">
+                                   <link rel="shortcut icon" href="/static/bootstrap/ico/favicon.png">
+                                   <script src="/static/jquery-1.9.1.min.js"></script>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">Lars Marketing</a>
+          <div class="nav-collapse collapse">
+            <p class="navbar-text pull-right">
+              Logged in as <a href="#" class="navbar-link">${user.username}</a>
+              | <a href="/accounts/logout/">Logout</a>
+            </p>
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="/admin/">Admin</a></li>
+              <li><a href="http://reporting.larsmarketing.com:9000/larsmarketing/lars-reporting/">Error Logs</a></li>
+              ##<li><a href="#contact">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+##        <div class="span3">
+##          <div class="well sidebar-nav">
+##            <ul class="nav nav-list">
+##              <li class="nav-header">Sidebar</li>
+##              <li class="active"><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##              <li class="nav-header">Sidebar</li>
+##              <li><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##              <li class="nav-header">Sidebar</li>
+##              <li><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##              <li><a href="#">Link</a></li>
+##            </ul>
+##          </div><!--/.well -->
+##        </div><!--/span-->
+        <div class="span9">
+          ${next.core()}
+        </div><!--/span-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <p>&copy; Lars Marketing 2013</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    
+    <script src="http://code.jquery.com/ui/1.10.1/jquery-ui.min.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/static/datepicker/js/bootstrap-datepicker.js"></script>
+    <!-- script type="text/javascript" src="/static/bootstrap-daterangepicker/date.js"></script>
+    <script type="text/javascript" src="/static/bootstrap-daterangepicker/daterangepicker.js"></script -->
+    <script type="text/javascript" src="/static/jstree-v.pre1.0/jquery.jstree.js"></script>
+
+
+    <script>
+
+
+jQuery.fn.highlight = function () {
+    $(this).each(function () {
+        var el = $(this);
+        $("<div/>")
+        .width(el.outerWidth())
+        .height(el.outerHeight())
+        .css({
+            "position": "absolute",
+            "left": el.offset().left,
+            "top": el.offset().top,
+            "background-color": "#ffff99",
+            "opacity": ".7",
+            "z-index": "9999999"
+        }).appendTo('body').fadeOut(1000).queue(function () { $(this).remove(); });
+    });
+}
+
+
+$(document).ready(function() {
+//$('.datepicker').datepicker();
+
+$('#dpMonths').datepicker();
+// $('input[name="daterange"]').daterangepicker(
+//   {
+//         ranges: {
+//             //'Today': ['today', 'today'],
+//             'Yesterday': ['yesterday', 'yesterday'],
+//             'Last 7 Days': [Date.today().add({ days: -7 }), 'yesterday'],
+//             'Last 30 Days': [Date.today().add({ days: -30 }), 'yesterday'],
+//             'This Month': [Date.today().moveToFirstDayOfMonth(), Date.today().moveToLastDayOfMonth()],
+//             'Last Month': [Date.today().moveToFirstDayOfMonth().add({ months: -1 }), Date.today().moveToFirstDayOfMonth().add({ days: -1 })]
+//         }
+//     }//,
+    //function(start, end) {
+    //    $('#reportrange span').html(start.toString('MMMM d, yyyy') + ' - ' + end.toString('MMMM d, yyyy'));
+    //}
+//    );
+
+ 
+});
+
+
+
+
+
+
+
+</script>
+
+
+  </body>
+</html>

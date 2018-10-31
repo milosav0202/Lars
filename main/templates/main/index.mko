@@ -1,0 +1,297 @@
+# -*- coding: utf-8 -*-
+<%namespace name="base" file="/main/base.mko"/>
+<%!
+import datetime, pytz, os
+
+%>
+<%inherit file="/main/base.mko"/>
+<%def name="core()">
+<div class="span12">
+<style>
+.zipfile{
+	font-weight:bold;
+}
+.xlsfile{
+	display:none;
+}
+</style>
+<h3>Generate Report</h3>
+Choose Client:
+
+<%def name="clientOut(key, clients)">
+<li id="${key}">
+	<%
+	name = clients[key]['name']
+	if not name.strip():
+		name = "&ltempty&gt"
+
+	%>
+
+    <a href="#">${name}</a>
+    <!-- UL node only needed for children - omit if there are no children -->
+    %if clients[key]['subIds']:
+    <ul>
+        <!-- Children LI nodes here -->
+        %for subk in clients[key]['subIds']:
+        	${clientOut(subk, clients)}
+        %endfor
+    </ul>
+    %endif
+</li>
+</%def>
+<%def name="clientOutDB(key, clients)">
+<li id="${key}">
+  <%
+  name = clients[key].Name
+  if not name.strip():
+    name = "&ltempty&gt"
+
+  %>
+
+    <a href="#">${name}</a>
+    <!-- UL node only needed for children - omit if there are no children -->
+    %if hasattr(clients[key], 'adaccountowner_set') and clients[key].adaccountowner_set.filter(Active__exact=True):
+    <ul>
+        <!-- Children LI nodes here -->
+        
+        %for subk in [aao.id for aao in clients[key].adaccountowner_set.filter(Active__exact=True)]:
+          ${clientOutDB(subk, clients)}
+        %endfor
+    </ul>
+    %elif hasattr(clients[key], 'subaccounts') and clients[key].subaccounts.filter(subaccount__Active__exact=True):
+    <ul>
+        %for subk in [aao.subaccount_id for aao in clients[key].subaccounts.filter(subaccount__Active__exact=True)]:
+          %if clients.has_key(subk):
+          <li id="${subk}"><a href="#">${clients[subk].Name}</a></li>
+          %endif
+        %endfor
+    </ul>
+    
+    %endif
+</li>
+</%def>
+<%
+dtNow = datetime.datetime.now(pytz.utc) 
+%>
+<form method="POST" action="/ajax/buildReports/" data-target="" data-async >
+${base.csrf()}
+<input type="hidden" name="clientlist" id="id_clientlist"/>
+<div id="treeClient" style="background:transparent;display:none;">
+<ul>
+%for k,v in clients.iteritems():
+<%
+saaos = None
+if hasattr(v, 'adaccountowner_set'):
+  saaos = v.adaccountowner_set.filter(Active__exact=True)
+%>
+%if saaos:
+${clientOutDB(k, clients)}
+%endif
+%endfor
+</ul>
+##<ul>
+##<li id="phtml_1" class="jstree-open"><a href="#" class="jstree-clicked">Root node 1</a><ul style="">
+##	<li id="phtml_2" class="jstree-leaf"><a href="#" class="">Child node 1</a></li>
+##	<li id="phtml_3" class="jstree-last jstree-leaf"><a href="#" class="">Child node 2</a></li>
+##</ul></li><li id="phtml_4" class="jstree-last jstree-leaf"><a href="#" class="">Root node 2</a></li></ul>
+</div>
+<div id="clientLoadStatus" style="background:transparent;">
+Loading Clients... <img width="16" height="16" src="/static/loading.gif" /> 
+</div>
+<!-- <select>
+  <option></option>
+  <option>Acme Inc</option>
+ </select> -->
+<br/>
+Choose Timeframe:
+<!-- div class="input-prepend">
+  <span class="add-on"><i class="icon-calendar"></i></span><input type="text" name="daterange" id="daterange">
+</div -->
+
+<div class="input-prepend date" id="dpMonths" data-date="${dtNow.strftime('%m/%Y')}" data-date-format="mm/yyyy" data-date-viewmode="months" data-date-minviewmode="months">
+         <span class="add-on"><i class="icon-calendar"></i></span><input id="id_monthSelector" name="monthSelector" class="span2" size="200" type="text" value="" >
+        </div>
+<input type="hidden" name="reportlabel" id="id_reportlabel">
+
+
+
+
+##<input type="text" class="span2 datepicker" value="02-16-2012" id="dp1">
+##<input type="text" class="span2 datepicker" value="02-16-2012" id="dp2">
+<br/>
+<button id="btnCreate" class="btn btn-large btn-primary" type="submit"  data-loading-text="Generating" autocomplete="off">Create</button> <span id="loading" style="margin-left:10px;"></span>
+</form>
+<div id="lastBatch"></div>
+<br/>
+<br/>
+<br/>
+<h4>Existing Reports</h4>
+<div class="alert"><strong>Note:</strong> Exported reports are removed from the server each evening, but can be regenerated at any time.</div>
+ <a class="btn btn-mini" style="margin-left: 8px;" href="javascript:$('.xlsfile').toggle();">Toggle XLS Visibility</a>
+ <br/>
+
+<table class="table table-hover table-striped">
+<thead><tr><th>Time Generated</th><th>File </th></tr></thead>
+<tbody id="reportbody">
+
+% for rpt in reports:
+<%
+isZip = False
+if os.path.splitext(rpt[1])[1] == ".zip": isZip = True
+%>
+<tr
+%if isZip:
+class="zipfile"
+%else:
+class="xlsfile"
+%endif
+><td>${rpt[0].strftime("%Y%m%dT%H:%M:%S")}</td><td>
+<a href="/static/reportExport/${rpt[1]}">${rpt[1]}</a>
+</td><td>
+%if dtNow - rpt[0] < datetime.timedelta(minutes=10):
+<span class="label label-success">New</span>
+%else:
+%endif
+</td></tr>
+% endfor
+</tbody>
+</table>
+</div>
+
+<script>
+
+$(document).ready(function(){
+
+
+
+
+
+	$("#treeClient").bind("loaded.jstree", function (event, data) {
+		console.log("here");
+        $("#clientLoadStatus").html('');
+        $("#treeClient").show();
+
+    }).jstree({
+		"plugins" : [ "themes", "html_data", "checkbox", "sort", "ui" ],
+		"core": {
+			"animation":50,
+		},
+		"themes" : {
+            "theme" : "default",
+            "dots" : false,
+            "icons" : false
+		},
+		checkbox: {
+            real_checkboxes: true,
+            real_checkboxes_names: function (n) {
+                return [("check_" + (n[0].id || Math.ceil(Math.random() * 10000))), n[0].id]
+            }
+        },
+
+		//"json_data" : {
+        ##//    "data" : ${jsTreeData}
+        //}
+	});
+
+	
+
+})
+
+jQuery(function($) {
+    $('form[data-async]').on('submit', function(event) {
+    	console.log("working!");
+        $('#btnCreate').button('loading');
+        
+
+
+        var checked_ids = []; 
+
+		$("#treeClient").jstree("get_checked",null,true).each 
+		(function () { 
+		  checked_ids.push(this.id); 
+		}); 
+
+    if(checked_ids.length < 10){
+    $("span#loading").html('<img width="16" height="16" src="/static/loading.gif" />');
+   }else{
+    $("span#loading").html('<img width="16" height="16" src="/static/loading.gif" /> May take awhile given the large number of clients selected.');
+   }
+
+		$("#id_clientlist").val(checked_ids.join(",")); 
+        var $form = $(this);
+        var $target = $($form.attr('data-target'));
+
+        //var reportlabel = $("div.ranges li.active").text();
+        var reportlabel = "Monthly"; //$("#monthSelector").val().text();
+        $('input#id_reportlabel').val(reportlabel);
+ 
+        $.ajax({
+            type: $form.attr('method'),
+            url: $form.attr('action'),
+            data: $form.serialize(),
+            dataType: "json",
+ 
+            success: function(data, status) {
+            	$("span#loading").html('');
+                $('#btnCreate').button('complete');
+                $('#btnCreate').button('reset');
+                $.each(data, function(index, data) {
+                  var fileExt = data[1].split('.').pop();
+                  if (fileExt == "zip"){
+                  	  var csscls = "zipfile";
+                  	  $("#lastBatch").html('<a href="/static/reportExport/' + data[1] + '">' + data[1] + '</a>').highlight();
+                  } else {
+                  		var csscls = "xlsfile";
+                  }
+				  $("#reportbody").prepend('<tr class="' + csscls + '"><td>' + data[0] + '</td><td><a href="/static/reportExport/' + data[1] + '">' + data[1] + '</a></td><td><span class="label label-success">New</span></td>').highlight();
+
+				});
+    
+                //$target.html("<h4>Followings Saved</h4>");
+                // setTimeout(function(){
+                //     $('#followmodal').modal('hide');
+                // }, 800);
+
+                
+                // setTimeout(function(){
+                //     $target.html(data);
+                //     $('#btnSignup').button('reset');
+                // }, 1000);
+            }
+        });
+ 
+        event.preventDefault();
+    });
+});
+
+function createReport(){
+	$("#btnCreate").button('loading');
+    $("span#loading").html('<img width="16" height="16" src="/static/loading.gif" />');
+	var checked_ids = []; 
+
+	$("#treeClient").jstree("get_checked",null,true).each 
+	(function () { 
+	  checked_ids.push(this.id); 
+	}); 
+	$("#id_clientlist").val(checked_ids.join(",")); 
+
+
+
+
+
+
+
+  setTimeout(function (){
+  	$("span#loading").html('');
+  ##var demo = $('<tr><td>${reports[0][0]}</td><td><a href="/static/reportExport/${reports[0][1]}">${reports[0][1]}</a></td><td><span class="label label-success">New</span></td>');
+  //demo.hide();
+  $("#reportbody").prepend(demo);
+  demo.highlight();
+  //demo.fadeIn('fast').effect("highlight", {}, 3000);
+  $("#btnCreate").button('reset');
+	}, 1000);
+  
+}
+</script>
+
+</%def>
